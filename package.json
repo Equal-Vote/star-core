@@ -1,9 +1,9 @@
 {
   "name": "star-tabulator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "keywords": [],
-  "main": "src/index.js",
+  "main": "src/StarResults.js",
   "type": "module",
   "dependencies": {
     "papaparse": "5.3.0"
