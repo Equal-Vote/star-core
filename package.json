@@ -6,7 +6,7 @@
   "main": "src/StarResults.js",
   "type": "module",
   "dependencies": {
-    "papaparse": "5.3.0"
+    "papaparse": "5.7.0"
   },
   "devDependencies": {
     "typescript": "3.8.3",
