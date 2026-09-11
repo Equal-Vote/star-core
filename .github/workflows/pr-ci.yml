@@ -8,10 +8,11 @@
 # Actions are pinned by commit SHA rather than tag, matching the convention
 # already used elsewhere in this org and required by the zizmor audit.
 #
-# `npm install`, not `npm ci`: this repo has no package-lock.json committed,
-# so `npm ci` cannot run. Committing a lockfile would be a real improvement --
-# it would also let Dependabot pin transitive dependencies -- but that is a
-# separate change. The setup-node npm cache is off for the same reason.
+# `npm ci`, from the package-lock.json this PR commits. The lockfile was
+# previously listed in .gitignore, so installs resolved fresh every time and
+# Dependabot could not pin transitive dependencies. A published package's
+# lockfile is not used by consumers -- npm ignores a dependency's lockfile --
+# so committing it only pins this repo's own CI and development installs.
 #
 # NODE_OPTIONS=--openssl-legacy-provider: react-scripts here builds on
 # webpack 4, whose hashing is rejected by OpenSSL 3 on modern Node
@@ -47,9 +48,10 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build
         env:
