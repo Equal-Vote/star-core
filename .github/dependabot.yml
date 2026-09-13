@@ -1,31 +1,55 @@
-# Dependabot version updates.
+# Dependabot configuration.
 #
-# Minor and patch bumps are grouped into a single PR per ecosystem to keep
-# review overhead low. Major bumps are deliberately left ungrouped so each one
-# gets its own PR and a real review.
+# Policy (set deliberately -- please read before editing):
 #
-# A cooldown holds brand-new releases for a few days, which blunts compromised-
-# release supply-chain attacks. Only semver ecosystems accept semver-*-days;
-# docker, docker-compose, github-actions, terraform and pip take default-days
-# alone and are rejected outright if given the semver keys.
+#   1. Routine version updates are minor/patch only. The `ignore` block drops
+#      semver-major bumps. The `version-update:` prefix scopes that ignore to
+#      VERSION updates only, so a security advisory whose only fix is a major
+#      bump still opens a PR. Never drop the `update-types:` key from that
+#      ignore entry -- a bare `dependency-name: "*"` would also silence
+#      security updates.
 #
-# Docs: https://docs.github.com/code-security/dependabot/dependabot-version-updates
+#   2. Everything lands in as few PRs as possible.
+#      This repo has a single ecosystem, so one group with `patterns: ["*"]`
+#      is all that is needed.
+#
+#   3. Security advisories are grouped per ecosystem by the `*-security`
+#      groups below.
+#
+#   4. `open-pull-requests-limit` is deliberately set on the update entry, where it is
+#      valid. Note it is counted per entry rather than per repo, and security
+#      PRs are exempt from it entirely.
+#
+#   5. Cooldown holds brand-new releases for a few days, which blunts
+#      compromised-release supply-chain attacks. Only semver ecosystems accept
+#      `semver-*-days`; docker, docker-compose, github-actions, terraform and
+#      pip take `default-days` alone and are REJECTED if given the semver keys.
+#
+# Docs: https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
 version: 2
 
 updates:
-
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 10
+      day: monday
+      time: "06:00"
+    open-pull-requests-limit: 3
     cooldown:
       default-days: 7
       semver-major-days: 30
       semver-minor-days: 7
       semver-patch-days: 3
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
     groups:
       npm:
-        update-types:
-          - minor
-          - patch
+        patterns:
+          - "*"
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
