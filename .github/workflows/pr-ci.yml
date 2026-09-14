@@ -1,0 +1,65 @@
+# Build check for pull requests.
+#
+# Without this, nothing verifies a pull request at all -- the only other
+# workflow runs on push to the default branch, after the merge. That makes
+# dependency bumps unreviewable in practice: the PR looks green because
+# nothing is checking it.
+#
+# Actions are pinned by commit SHA rather than tag, matching the convention
+# already used elsewhere in this org and required by the zizmor audit.
+#
+# `npm ci`, from the package-lock.json this PR commits. The lockfile was
+# previously listed in .gitignore, so installs resolved fresh every time and
+# Dependabot could not pin transitive dependencies. A published package's
+# lockfile is not used by consumers -- npm ignores a dependency's lockfile --
+# so committing it only pins this repo's own CI and development installs.
+#
+# NODE_OPTIONS=--openssl-legacy-provider: react-scripts here builds on
+# webpack 4, whose hashing is rejected by OpenSSL 3 on modern Node
+# ("error:0308010C:digital envelope routines::unsupported").
+#
+# No test step: `npm test` currently fails on "True Tie Test"
+# (src/Tests/ties.test.js:61), 1 failed / 10 passed, on the default branch.
+name: PR CI
+
+"on":
+  pull_request:
+
+# Read-only: this workflow never needs to write to the repo.
+permissions:
+  contents: read
+
+# A new push to a PR makes the in-flight run redundant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # checkout leaves the job token in .git/config unless told
+          # otherwise. Nothing here pushes, so drop it (zizmor:
+          # artipacked).
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        env:
+          # react-scripts promotes lint warnings to build errors whenever
+          # CI=true, which Actions sets automatically. This repo carries
+          # pre-existing warnings, so leaving that on would make the check
+          # red for reasons unrelated to whether the app builds. Clear the
+          # warnings, then drop this line to get the strict behaviour back.
+          CI: "false"
+          NODE_OPTIONS: --openssl-legacy-provider
+        run: npm run build
